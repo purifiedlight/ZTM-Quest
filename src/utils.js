@@ -44,10 +44,12 @@ export async function displayDialogue({
     const closeBtn = document.getElementById('dialog-close-btn');
     const nextBtn = document.getElementById('dialog-next-btn');
     const energyUI = document.getElementById('energy-container');
+    const miniMapUI = document.getElementById('minimap');
     let abort = new AbortController();
 
     energyUI.style.display = 'none';
     dialogUI.style.display = 'block';
+    miniMapUI.style.display = 'none';
 
     if (text.length > 1) {
         nextBtn.style.display = 'block';
@@ -105,9 +107,11 @@ export async function displayPermissionBox({
     const closeBtn = document.getElementById('dialog-close-btn');
     const nextBtn = document.getElementById('dialog-next-btn');
     const energyUI = document.getElementById('energy-container');
+    const miniMapUI = document.getElementById('minimap');
     closeBtn.innerHTML = 'No';
     nextBtn.innerHTML = 'Yes';
     energyUI.style.display = 'none';
+    miniMapUI.style.display = 'none';
     dialogUI.style.display = 'block';
     closeBtn.style.display = 'block';
     nextBtn.style.display = 'block';
@@ -175,7 +179,6 @@ export function setCamScale(k) {
 export const buildInteractionPrompt = (sprite, k) => {
     const info = document.getElementById('interaction-info');
     info.style.display = 'flex';
-    const spritePos = sprite.pos;
 
     k.loadSprite('question-bubble', './assets/sprites/question-bubble.png', {
         sliceX: 8,
@@ -188,13 +191,14 @@ export const buildInteractionPrompt = (sprite, k) => {
         },
     });
 
-    k.add([
+    sprite.add([
         k.sprite('question-bubble', { anim: 'float' }),
         k.animate([0, 1, 2, 3, 4, 5, 6, 7]),
         k.area(),
         k.color(255, 255, 255),
         k.outline(2, k.Color.BLACK),
-        k.pos(spritePos.x + 5, spritePos.y - sprite.height - 20),
+        k.anchor('botleft'),
+        k.pos(k.vec2(0, -10)),
         k.layer('ui'),
         `question-bubble`,
     ]);
@@ -203,7 +207,22 @@ export const buildInteractionPrompt = (sprite, k) => {
 export const tearDownInteractionPrompt = (k) => {
     const info = document.getElementById('interaction-info');
     info.style.display = 'none';
-    if (k.get('question-bubble')[0]) {
-        k.destroy(k.get('question-bubble')[0]);
+
+    const questionBubbles = k.get('question-bubble', { recursive: true });
+
+    if (questionBubbles.length > 0) {
+        questionBubbles.forEach((bubble) => {
+            bubble.destroy();
+        });
     }
+};
+
+const gameWindow = document.querySelector('.game-window');
+
+export const hideCanvasFrame = () => {
+    gameWindow.classList.add('full-screen');
+};
+
+export const showCanvasFrame = () => {
+    gameWindow.classList.remove('full-screen');
 };

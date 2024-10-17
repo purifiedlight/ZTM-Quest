@@ -1,11 +1,13 @@
 import { scaleFactor } from './constants';
 import { animations, stopCharacterAnims } from './utils/animation';
 import { getCamScale } from './utils';
+import { k } from './kplayCtx';
+import { drawMinimap, toggleMinimap } from './utils/miniMap';
 
 // Manage multiple pressed buttons
 const pressed = new Set();
 
-export const addPlayerControls = (k, player) => {
+export const addPlayerControls = (player) => {
     k.onButtonPress(
         ['up', 'down', 'left', 'right'],
         (dir) => player.isInDialog || pressed.add(dir)
@@ -60,11 +62,15 @@ export const addPlayerControls = (k, player) => {
         const dirX = pressed.has('left') ? -1 : pressed.has('right') ? 1 : 0;
         const dirY = pressed.has('up') ? -1 : pressed.has('down') ? 1 : 0;
         const moveDir = k.vec2(dirX, dirY);
+
         const speed =
             pressed.size === 1
-                ? player.speed
-                : // Dot product for diagonal movement 45%
-                  player.speed * 0.707106781188095; // 1 / sqrt(2)
+                ? player.state.energy >= 50
+                    ? player.speed * 1.25
+                    : player.speed * 1.1
+                : player.state.energy >= 50
+                  ? player.speed * 0.707106781188095 * 1.25 // Dot product for diagonal movement 45%
+                  : player.speed * 0.707106781188095 * 1.1;
 
         player.move(moveDir.unit().scale(speed));
     });
@@ -72,72 +78,52 @@ export const addPlayerControls = (k, player) => {
     const [map] = k.get('main_map');
     const camScale = getCamScale(k);
 
-    const leftPanel = document.getElementById('left-panel');
-    const rightPanel = document.getElementById('right-panel');
-    const header = document.getElementById('header');
-    const footer = document.getElementById('footer');
-
-    const leftBounds = leftPanel.getBoundingClientRect();
-    const rightBounds = rightPanel.getBoundingClientRect();
-    const headerBounds = header.getBoundingClientRect();
-    const footerBounds = footer.getBoundingClientRect();
-
-    function getBoundaries() {
-        return {
-            left: -leftBounds.width / camScale,
-            right: map.width * scaleFactor + rightBounds.width / camScale,
-            top: -headerBounds.height / camScale,
-            bottom: map.height * scaleFactor + footerBounds.height / camScale,
-        };
-    }
-
     function updatePos({ k, x, y }) {
-        const boundaries = getBoundaries(k);
+        let camX = x;
+        let camY = y;
 
-        const halfHeightScreen = k.height() / 2 / camScale;
-        const halfWidthScreen = k.width() / 2 / camScale;
-        const mapW = boundaries.right + Math.abs(boundaries.left);
-        const mapH = boundaries.bottom + Math.abs(boundaries.top);
+        // scaleFactor needs to multiplied with map dimensions to get values that are relative to player's position and speed.
+        const mapWidth = map.width * scaleFactor;
+        const mapHeight = map.height * scaleFactor;
+        const mapCenterX = mapWidth / 2;
+        const mapCenterY = mapHeight / 2;
 
-        if (k.width() / camScale > mapW) {
-            const diff = k.width() / camScale - mapW;
-            x = boundaries.left + halfWidthScreen - diff / 2;
-        } else {
-            if (x + halfWidthScreen > boundaries.right) {
-                x = boundaries.right - halfWidthScreen;
-            } else if (x - halfWidthScreen < boundaries.left) {
-                x = boundaries.left + halfWidthScreen;
+        // canvas dimensions needs to be adjusted with respect to camScale.
+        const canvasWidth = k.canvas.offsetWidth / camScale;
+        const canvasHeight = k.canvas.offsetHeight / camScale;
+
+        const maxDistX = mapWidth / 2 - canvasWidth / 2;
+        const maxDistY = mapHeight / 2 - canvasHeight / 2;
+
+        if (mapWidth > canvasWidth) {
+            if (x > mapCenterX + maxDistX) {
+                camX = mapCenterX + maxDistX;
             }
+            if (x < mapCenterX - maxDistX) {
+                camX = mapCenterX - maxDistX;
+            }
+        } else {
+            camX = mapCenterX;
         }
 
-        if (k.height() / camScale > mapH) {
-            const diff = k.height() / camScale - mapH;
-            y = boundaries.bottom - halfHeightScreen + diff / 2;
-        } else {
-            const hViewPort =
-                (k.height() - footerBounds.height - headerBounds.height) /
-                camScale;
-
-            const dy =
-                halfHeightScreen -
-                (k.height() - footerBounds.height) / camScale +
-                hViewPort / 2;
-
-            if (y + halfHeightScreen + dy > boundaries.bottom) {
-                y = boundaries.bottom - halfHeightScreen;
-            } else if (y - halfHeightScreen + dy < boundaries.top) {
-                y = boundaries.top + halfHeightScreen;
-            } else {
-                y += dy;
+        if (mapHeight > canvasHeight) {
+            if (y > mapCenterY + maxDistY) {
+                camY = mapCenterY + maxDistY;
             }
+            if (y < mapCenterY - maxDistY) {
+                camY = mapCenterY - maxDistY;
+            }
+        } else {
+            camY = mapCenterY;
         }
 
-        return [x, y];
+        return [camX, camY];
     }
 
     k.onUpdate(() => {
         const updPos = updatePos({ k, ...player.pos });
         k.camPos(...updPos);
+        drawMinimap(k, player); // Update minimap
     });
 
     k.onMouseDown((mouseBtn) => {
@@ -187,6 +173,16 @@ export const addPlayerControls = (k, player) => {
             return;
         }
     });
+
+    // Set up the button press event to toggle the minimap
+    k.onButtonPress('map', () => {
+        toggleMinimap(k);
+    });
+
     // Only stop animations if no buttons are pressed
     k.onMouseRelease(() => pressed.size || stopCharacterAnims(player));
+
+    player.onDestroy(() => {
+        pressed.clear();
+    });
 };
