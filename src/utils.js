@@ -1,3 +1,5 @@
+import { time } from './kplayCtx';
+
 const processDialogue = async ({
     dialog,
     text,
@@ -39,15 +41,17 @@ export async function displayDialogue({
     text,
     onDisplayEnd = () => {},
 }) {
+    time.paused = true;
+    player.state.isInDialog = true;
     const dialogUI = document.getElementById('textbox-container');
     const dialog = document.getElementById('dialog');
     const closeBtn = document.getElementById('dialog-close-btn');
     const nextBtn = document.getElementById('dialog-next-btn');
-    const energyUI = document.getElementById('energy-container');
+    const statsUI = document.getElementById('stats-container');
     const miniMapUI = document.getElementById('minimap');
     let abort = new AbortController();
 
-    energyUI.style.display = 'none';
+    statsUI.style.display = 'none';
     dialogUI.style.display = 'block';
     miniMapUI.style.display = 'none';
 
@@ -77,12 +81,14 @@ export async function displayDialogue({
 
     function onCloseBtnClick() {
         onDisplayEnd();
+        time.paused = false;
         abort.abort();
         dialogUI.style.display = 'none';
         dialog.innerHTML = '';
-        energyUI.style.display = 'flex';
+        statsUI.style.display = 'flex';
         closeBtn.removeEventListener('click', onCloseBtnClick);
         k.triggerEvent('dialog-closed', { player, characterName, text });
+        player.state.isInDialog = false;
         k.canvas.focus();
     }
     closeBtn.addEventListener('click', onCloseBtnClick);
@@ -91,7 +97,9 @@ export async function displayDialogue({
         if (key.code === 'Enter') {
             document.activeElement.click();
         }
-        if (key.code === 'Escape') closeBtn.click();
+        if (key.code === 'Escape') {
+            closeBtn.click();
+        }
     });
     k.triggerEvent('dialog-displayed', { player, characterName, text });
 }
@@ -102,15 +110,17 @@ export async function displayPermissionBox({
     text,
     onDisplayEnd = () => {},
 }) {
+    time.paused = true;
+    player.state.isInDialog = true;
     const dialogUI = document.getElementById('textbox-container');
     const dialog = document.getElementById('dialog');
     const closeBtn = document.getElementById('dialog-close-btn');
     const nextBtn = document.getElementById('dialog-next-btn');
-    const energyUI = document.getElementById('energy-container');
+    const statsUI = document.getElementById('stats-container');
     const miniMapUI = document.getElementById('minimap');
     closeBtn.innerHTML = 'No';
     nextBtn.innerHTML = 'Yes';
-    energyUI.style.display = 'none';
+    statsUI.style.display = 'none';
     miniMapUI.style.display = 'none';
     dialogUI.style.display = 'block';
     closeBtn.style.display = 'block';
@@ -126,11 +136,14 @@ export async function displayPermissionBox({
             abort.abort();
             dialogUI.style.display = 'none';
             dialog.innerHTML = '';
-            energyUI.style.display = 'flex';
+            statsUI.style.display = 'flex';
             closeBtn.removeEventListener('click', onCloseBtnClick);
             nextBtn.removeEventListener('click', onNextBtnClick);
             closeBtn.innerHTML = 'Close';
             nextBtn.innerHTML = 'Next';
+            player.state.isInDialog = false;
+            time.paused = false;
+
             k.canvas.focus();
             resolve(false); // Resolve with false when "No" is clicked
         }
@@ -140,11 +153,14 @@ export async function displayPermissionBox({
             abort.abort();
             dialogUI.style.display = 'none';
             dialog.innerHTML = '';
-            energyUI.style.display = 'flex';
+            statsUI.style.display = 'flex';
             nextBtn.removeEventListener('click', onNextBtnClick);
             closeBtn.removeEventListener('click', onCloseBtnClick);
             closeBtn.innerHTML = 'Close';
             nextBtn.innerHTML = 'Next';
+            player.state.isInDialog = false;
+            time.paused = false;
+
             k.canvas.focus();
             resolve(true); // Resolve with true when "Yes" is clicked
         }
@@ -226,3 +242,27 @@ export const hideCanvasFrame = () => {
 export const showCanvasFrame = () => {
     gameWindow.classList.remove('full-screen');
 };
+
+export async function getAssets() {
+    const fileSHA = await fetch(
+        'https://api.github.com/repos/zero-to-mastery/ZTM-Quest/contents/asset_credits.md'
+    );
+    const data = await fileSHA.json();
+    const fileContents = atob(data.content);
+    return fileContents
+        .split('\n')
+        .filter((content) => content.trim() !== '')
+        .join('\n');
+}
+
+export async function getContributors() {
+    const contributors = await fetch(
+        'https://api.github.com/repos/zero-to-mastery/ZTM-Quest/contributors'
+    );
+    const data = await contributors.json();
+    return data
+        .map((person) => {
+            return person.login;
+        })
+        .join('\n');
+}

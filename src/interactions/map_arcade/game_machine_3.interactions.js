@@ -1,8 +1,8 @@
 import { displayDialogue } from '../../utils';
+import { addCoins } from '../../utils/coinsUpdate';
 
 export const interactionWithGameMachine3 = (player, k, map) => {
     player.onCollide('game_machine_3', () => {
-        player.isInDialog = true;
         // Trigger the custom prompt when the player collides with the game machine
         showCustomPrompt(
             'Do you want to play the Flappy bird game?', // Updated Prompt message
@@ -15,7 +15,6 @@ export const interactionWithGameMachine3 = (player, k, map) => {
                         player,
                         text: ['Starting the Flappy Bird Game... Good luck!'],
                         onDisplayEnd: () => {
-                            player.isInDialog = false;
                             startFlappyBirdGame(k); // Pass k to the game start function
                         },
                     });
@@ -24,9 +23,6 @@ export const interactionWithGameMachine3 = (player, k, map) => {
                         k,
                         player,
                         text: ['Maybe next time!'],
-                        onDisplayEnd: () => {
-                            player.isInDialog = false;
-                        },
                     });
                 }
             }
@@ -247,12 +243,16 @@ function startFlappyBirdGame(k) {
         function endGame() {
             k.addKaboom(bird.pos);
             k.shake();
+            if (score > 1500) {
+                addCoins(10);
+            }
             k.go('lose', {
                 title: 'Flappy Bird',
                 gameRestartSceneName: 'flappyBirdGame',
                 gameExitSceneName: 'arcade',
                 score,
             });
+            score = 0;
         }
     });
 }

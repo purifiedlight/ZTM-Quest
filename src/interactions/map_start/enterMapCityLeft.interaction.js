@@ -1,32 +1,50 @@
 import { displayDialogue } from '../../utils';
+import {
+    recieveQuest,
+    retrieveQuestObjectiveStatus,
+} from '../../utils/questHandler';
+import { map_start_quests } from '../quests/constants.quests';
 
 export const enterMapCityLeftInteraction = (player, k, map) => {
+    const questName = 'Start Interacting!';
     player.onCollide('enter_map_left', () => {
+        const hasTalkedToBruno = retrieveQuestObjectiveStatus(
+            player,
+            questName,
+            'hasTalkedToBruno'
+        );
+        const wasInRestroom = retrieveQuestObjectiveStatus(
+            player,
+            questName,
+            'wasInRestroom'
+        );
+        const hasWashedHands = retrieveQuestObjectiveStatus(
+            player,
+            questName,
+            'hasWashedHands'
+        );
         if (
-            player.state.hasTalkedToBruno &&
-            player.state.wasInRestroom &&
-            player.state.hasHandsWashed
+            hasTalkedToBruno &&
+            wasInRestroom &&
+            hasWashedHands &&
+            questName in player.state.quests
         ) {
             k.go('city', 'spawn_office_left');
         } else {
-            if (!player.state.hasTalkedToBruno) {
-                player.isInDialog = true;
+            recieveQuest(player, map_start_quests['Start Interacting!']);
+            if (!hasTalkedToBruno) {
                 displayDialogue({
                     k,
                     player,
                     text: [
                         'You should talk to Bruno first.',
-                        'He is the guy with the beautiful suite to your left side.',
+                        'He is the guy with the beautiful suit at the other entrance.',
                     ],
-                    onDisplayEnd: () => {
-                        player.isInDialog = false;
-                    },
                 });
 
                 return;
             } else {
-                if (!player.state.wasInRestroom) {
-                    player.isInDialog = true;
+                if (!wasInRestroom) {
                     displayDialogue({
                         k,
                         player,
@@ -35,22 +53,15 @@ export const enterMapCityLeftInteraction = (player, k, map) => {
                             'Remember what bruno said? It will be a long journey.',
                             "Don't forget to wash your hands.",
                         ],
-                        onDisplayEnd: () => {
-                            player.isInDialog = false;
-                        },
                     });
                     return;
                 }
 
-                if (!player.state.hasHandsWashed) {
-                    player.isInDialog = true;
+                if (!hasWashedHands) {
                     displayDialogue({
                         k,
                         player,
                         text: ['You should wash your hands first.'],
-                        onDisplayEnd: () => {
-                            player.isInDialog = false;
-                        },
                     });
                 }
             }

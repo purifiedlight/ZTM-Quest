@@ -1,11 +1,21 @@
-const LOCAL_STORAGE_GAME_STATE_KEY = 'gameState';
+import { speedByScaleFactor } from '../constants';
+
+const LOCAL_STORAGE_GAME_STATE_KEY = 'gameStateZtmQuest';
 
 const initialState = () => ({
     player: {
-        hasTalkedToBruno: false,
-        wasInRestroom: false,
-        hasHandsWashed: false,
         energy: 100,
+        coinsCollected: 0,
+        coinsSpent: 0,
+        speed: speedByScaleFactor,
+        direction: 'down',
+        isInDialog: false,
+        collectedCoins: 0,
+        quests: {},
+        housesOwned: [],
+        score: 0,
+        scene: 'start',
+        position: { x: 32, y: 384 },
     },
 });
 
@@ -13,13 +23,31 @@ const initialState = () => ({
 let currentState = undefined;
 
 export const clearSavedGame = () => {
+    currentState = undefined;
     localStorage.removeItem(LOCAL_STORAGE_GAME_STATE_KEY);
 };
 
+const syncStateProps = (stateToCheck, defaultState) => {
+    for (const prop in defaultState) {
+        if (typeof stateToCheck[prop] === 'object') {
+            syncStateProps(stateToCheck[prop], defaultState[prop]);
+            continue;
+        }
+        if (!stateToCheck[prop]) {
+            stateToCheck[prop] = defaultState[prop];
+        }
+    }
+};
+
 export const loadSavedGameState = () => {
+    const defaultState = initialState();
     const stringifiedState =
         localStorage.getItem(LOCAL_STORAGE_GAME_STATE_KEY) || null;
-    const savedState = JSON.parse(stringifiedState) || initialState();
+    const savedState = JSON.parse(stringifiedState) || defaultState;
+
+    syncStateProps(savedState, defaultState);
+    currentState = savedState;
+
     return savedState;
 };
 

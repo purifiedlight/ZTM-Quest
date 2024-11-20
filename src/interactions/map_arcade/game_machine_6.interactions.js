@@ -1,8 +1,8 @@
 import { displayDialogue } from '../../utils';
+import { addCoins } from '../../utils/coinsUpdate';
 
 export const interactionWithGameMachine6 = (player, k, map) => {
     player.onCollide('game_machine_6', () => {
-        player.isInDialog = true;
         // Trigger the custom prompt when the player collides with the game machine
         showCustomPrompt(
             'Do you want to play the Chrome Dino Game?', // Updated Prompt message
@@ -15,7 +15,6 @@ export const interactionWithGameMachine6 = (player, k, map) => {
                         player,
                         text: ['Starting the Chrome Dino Game... Good luck!'],
                         onDisplayEnd: () => {
-                            player.isInDialog = false;
                             startChromeDinoGame(k); // Pass k to the game start function
                         },
                     });
@@ -24,9 +23,6 @@ export const interactionWithGameMachine6 = (player, k, map) => {
                         k,
                         player,
                         text: ['Maybe next time!'],
-                        onDisplayEnd: () => {
-                            player.isInDialog = false;
-                        },
                     });
                 }
             }
@@ -244,6 +240,9 @@ function startChromeDinoGame(k) {
             dino.onCollide('tree', () => {
                 k.addKaboom(dino.pos);
                 k.shake();
+                if (score > 5000) {
+                    addCoins(25);
+                }
                 k.go('lose', {
                     title: 'Dino game',
                     gameRestartSceneName: 'dinoGame',

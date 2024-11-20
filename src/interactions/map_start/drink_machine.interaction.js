@@ -1,11 +1,10 @@
 import { displayDialogue } from '../../utils';
-import { updateEnergyState } from '../../utils/energyUpdate';
+import { purchaseItem } from '../../utils/coinsUpdate';
 
 // List of drinks and possible fun surprises
 
 export const interactionWithDrinksMachine = (player, k, map) => {
     player.onCollide('drinks_machine', () => {
-        player.isInDialog = true;
         // Trigger the custom prompt when the player collides with the drinks machine
         showCustomPrompt(
             'What would you like to drink?', // Prompt message
@@ -32,11 +31,10 @@ export const interactionWithDrinksMachine = (player, k, map) => {
                     player,
                     text: texts[selectedOption],
                     onDisplayEnd: () => {
-                        player.isInDialog = false;
                         if (selectedOption == 'Water') {
-                            updateEnergyState(player.state, 20);
+                            purchaseItem(k, 5, 20);
                         } else {
-                            updateEnergyState(player.state, 15);
+                            purchaseItem(k, 8, 15);
                         }
                     },
                 });

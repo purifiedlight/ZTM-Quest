@@ -1,5 +1,6 @@
-import { k } from '../kplayCtx';
-import { clearSavedGame } from './gameState';
+import { k, time } from '../kplayCtx';
+import { getGameState, clearSavedGame } from './gameState';
+import { updateCoinsUI } from './coinsUpdate';
 
 // Mobile menu related
 
@@ -34,19 +35,24 @@ const hideAlertWindow = () => {
 
 // New game related
 const clickNewGame = () => {
+    time.pause();
     showAlertWindow();
     const newGameAlert = document.querySelector('.new-game-alert');
     newGameAlert.classList.add('display-block');
 };
 
 const clickNewGameNo = () => {
+    time.unpause();
     const newGameAlert = document.querySelector('.new-game-alert');
     newGameAlert.classList.remove('display-block');
     hideAlertWindow();
 };
 
 const clickNewGameYes = () => {
+    time.unpause();
+    time.reset();
     clearSavedGame();
+    updateCoinsUI();
     clickNewGameNo();
     k.go('start');
 };
@@ -61,9 +67,10 @@ newGameYesButton.addEventListener('click', clickNewGameYes);
 // Stats related
 
 const showStats = () => {
-    const player = k.get('player')[0];
-    const coinsCollected = player.collectedCoins;
-    const coinsSpent = 0;
+    time.pause();
+    const player = getGameState().player;
+    const coinsCollected = player.coinsCollected;
+    const coinsSpent = player.coinsSpent;
 
     // Calculation for time spent in game
     const timeSpent = k.time();
@@ -86,6 +93,7 @@ const showStats = () => {
 };
 
 const hideStats = () => {
+    time.unpause();
     const statsAlert = document.querySelector('.stats-alert');
     statsAlert.classList.remove('display-block');
     hideAlertWindow();
@@ -110,12 +118,13 @@ debugButton.addEventListener('click', toggleDebugMode);
 const toggleAudio = () => {
     if (k.audioCtx.state.includes('running')) {
         k.audioCtx.suspend();
-        audioButton.innerHTML = 'No Audio';
+        audioIcon.src = 'assets/sprites/mute.png';
     } else {
         k.audioCtx.resume();
-        audioButton.innerHTML = 'Audio';
+        audioIcon.src = 'assets/sprites/audio-on.png';
     }
 };
+const audioIcon = document.getElementById('audio-icon');
 
 const audioButton = document.getElementById('audio-button');
 audioButton.addEventListener('click', toggleAudio);
