@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "jest",
     "build": "vite build",
     "preview": "vite preview",
     "prettier": "npx prettier . --check --config ./.prettierrc.js",

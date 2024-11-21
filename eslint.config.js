@@ -1,13 +1,20 @@
 import globals from 'globals';
 import pluginJs from '@eslint/js';
 import importPlugin from 'eslint-plugin-import';
+import jestPlugin from 'eslint-plugin-jest';
 
 export default [
     pluginJs.configs.recommended,
     importPlugin.flatConfigs.recommended,
     {
         languageOptions: {
-            globals: globals.browser,
+            globals: {
+                ...globals.browser,
+                test: true,          // Pridaj "test" globálnu premennú pre Jest
+                expect: true,        // Pridaj aj "expect"
+                beforeEach: true,    // Pridaj "beforeEach"
+                afterEach: true,     // Pridaj "afterEach"
+            },
             ecmaVersion: 2021,
             sourceType: 'module',
         },
@@ -24,26 +31,12 @@ export default [
                     reportUsedIgnorePattern: false,
                 },
             ],
-            'no-undef': 'off',
-            'no-prototype-builtins': 'off',
-            'no-constant-condition': 'off',
-            'no-async-promise-executor': 'off',
-            'no-unsafe-optional-chaining': 'off',
-            'no-unsafe-negation': 'off',
-            'no-unsafe-regex': 'off',
-            'no-unsafe-return': 'off',
-            'no-unsafe-finally': 'off',
-            'no-unsafe-assignment': 'off',
-            'no-unsafe-member-access': 'off',
-            'no-unsafe-call': 'off',
-            'no-unsafe-argument': 'off',
-            'no-unsafe-regular-expressions': 'off',
-            'import/no-unresolved': 'error',
-            'import/namespace': 'off',
-            'import/no-named-as-default': 'off',
-            'import/no-named-as-default-member': 'off',
-            'import/default': 'off',
+            'no-undef': 'off',  // Vypnutie pravidla pre nedefinované premenné
             'no-console': 'warn',
         },
+    },
+    {
+        plugins: ['jest'],
+        extends: ['plugin:jest/recommended'],
     },
 ];
