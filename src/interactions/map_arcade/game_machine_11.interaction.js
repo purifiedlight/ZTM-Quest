@@ -70,12 +70,45 @@ function closeCustomPrompt() {
     document.getElementById('custom-prompt').style.display = 'none';
 }
 
-export function scitavanie(a, b){
-    return a + b;
+let formulaValues = [];
+export function getRandomValueOfTrack(formulaValues) {
+    const randomIndex = Math.floor(Math.random() * formulaValues.length);
+    return formulaValues[randomIndex];
 }
 
-export function odcitavanie(a, b){
-    return a - b;
+export function calculateScore(baseScore, formulasOvertaken, trophyCount) {
+    let score = baseScore;
+
+    if (formulasOvertaken === 0) {
+        score *= 0.5;
+    } else {
+        score *= formulasOvertaken * 2;
+    }
+
+    if (trophyCount === 0) {
+        score *= 0.5;
+    } else {
+        score *= trophyCount;
+    }
+
+    return Math.round(score);
+}
+
+let trophyCount;
+export function addTrophy(trophyCount) {
+    return trophyCount+1;
+}
+
+let formulasCount;
+export function addFormula(formulasCount) {
+    return formulasCount+1;
+}
+
+let speedy;
+export function calculateInterval(speedy) {
+    const minInterval = 0.05;
+    const baseInterval = 0.1;
+    return Math.max(minInterval, baseInterval / speedy);
 }
 
 function startChromeFormulaGame(k) {
@@ -85,8 +118,8 @@ function startChromeFormulaGame(k) {
     const formulaCenter = k.height() / 2 - 12 * scaleFactor;
     const formulaUp = roadPosition + (roadHeight / 3) / 2 - 12 * scaleFactor;
     const formulaDown = 2 * roadPosition - (roadHeight / 3) / 2 - 12 * scaleFactor;
-    const formulaValues = [formulaCenter, formulaUp, formulaDown];
-    let racingMusic, currentSong, lineCounter, songCounter, speedy, score, trophyCount, formulasCount, lightsOut, isButtonClicked;
+    formulaValues = [formulaCenter, formulaUp, formulaDown];
+    let racingMusic, currentSong, lineCounter, songCounter, score, lightsOut, isButtonClicked;
 
     k.setBackground(132, 101, 236);
     k.loadFont("Pixelify", "./assets/fonts/PixelifySans-VariableFont_wght.ttf",{outline: 2});
@@ -113,6 +146,7 @@ function startChromeFormulaGame(k) {
             run: { from: 0, to: 80, loop: true, speed: 10 },
         },
     });
+    
 
     k.scene("game", () => {
         lightsOut = false;
@@ -181,11 +215,6 @@ function startChromeFormulaGame(k) {
         k.onKeyPress("space", changeLine);
         k.onClick(changeLine);
 
-        function getRandomValueOfTrack() {
-            const randomIndex = Math.floor(Math.random() * formulaValues.length);
-            return formulaValues[randomIndex];
-        }
-
         function spawnFormula() {
             if (!lightsOut) return;
             const spawnTrophy = Math.random() < 0.5;
@@ -194,7 +223,7 @@ function startChromeFormulaGame(k) {
                 var trophy = k.add([
                     k.sprite("trophy"),
                     k.area(),
-                    k.pos(k.width(), getRandomValueOfTrack()),
+                    k.pos(k.width(), getRandomValueOfTrack(formulaValues)),
                     k.move(k.LEFT, speedy),
                     k.scale(scaleFactor),
                     "trophy"
@@ -222,7 +251,7 @@ function startChromeFormulaGame(k) {
                     k.sprite("formula"),
                     k.area(),
                     k.body(),
-                    k.pos(k.width(), getRandomValueOfTrack()),
+                    k.pos(k.width(), getRandomValueOfTrack(formulaValues)),
                     k.move(k.LEFT, speedy),
                     k.scale(scaleFactor),
                     "otherformula"
@@ -235,7 +264,7 @@ function startChromeFormulaGame(k) {
                         loop: false
                     });
                     formula.destroy();
-                    formulasCount++;
+                    formulasCount = addFormula(formulasCount);
                 });
             }
 
@@ -366,12 +395,6 @@ function startChromeFormulaGame(k) {
             let forward = true;
             let currentOffset = 0;
 
-            function calculateInterval(speedy) {
-                const minInterval = 0.05;
-                const baseInterval = 0.1;
-                return Math.max(minInterval, baseInterval / speedy);
-            }
-
             function drawDashedLines(offset) {
                 segments.forEach(segment => {
                     segment.destroy();
@@ -457,7 +480,7 @@ function startChromeFormulaGame(k) {
         });
 
         player.onCollide("trophy", () => {
-            trophyCount++;
+            trophyCount = addTrophy(trophyCount);
         });
 
         const scoreLabel = k.add([
@@ -521,17 +544,7 @@ function startChromeFormulaGame(k) {
     });
 
     k.scene("lose", (score, formulasOvertaken, trophyCount) => {
-        if (formulasOvertaken == 0) {
-            score = score * 0.5;
-        } else {
-            score = score * formulasOvertaken * 2;
-        }
-
-        if (trophyCount == 0) {
-            score = score * 0.5;
-        } else {
-            score = score * trophyCount;
-        }
+        score = calculateScore(score, formulasOvertaken, trophyCount);
 
         k.add([
             k.text("Formulas: " + formulasOvertaken, { font: "Pixelify" }),
