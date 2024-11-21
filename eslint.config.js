@@ -3,11 +3,20 @@ import pluginJs from '@eslint/js';
 import importPlugin from 'eslint-plugin-import';
 
 export default [
+    // Základná konfigurácia
     pluginJs.configs.recommended,
     importPlugin.flatConfigs.recommended,
     {
         languageOptions: {
-            globals: globals.browser,
+            globals: {
+                ...globals.browser, // Existujúce globálne premenné pre prehliadač
+                jasmine: true,      // Pridanie globálneho objektu pre Jasmine
+                describe: true,
+                it: true,
+                expect: true,
+                beforeEach: true,
+                afterEach: true,
+            },
             ecmaVersion: 2021,
             sourceType: 'module',
         },
@@ -44,6 +53,29 @@ export default [
             'import/no-named-as-default-member': 'off',
             'import/default': 'off',
             'no-console': 'warn',
+        },
+    },
+    // Špecifická konfigurácia pre Jasmine
+    {
+        files: ['**/*.spec.js', '**/*.test.js'], // Testovacie súbory
+        ignores: ['**/node_modules/**'], // Ignorovanie nepotrebných adresárov
+        languageOptions: {
+            globals: {
+                jasmine: true, // Jasmine globálne premenné
+                describe: true,
+                it: true,
+                expect: true,
+                beforeEach: true,
+                afterEach: true,
+            },
+            ecmaVersion: 2021,
+            sourceType: 'module',
+        },
+        rules: {
+            'no-unused-vars': 'off',
+            'no-undef': 'off', // Ignorovanie `no-undef` v testoch
+            'import/no-unresolved': 'off', // Ignorovanie chýb importov v testoch
+            'no-console': 'off', // Povoliť `console` v testoch
         },
     },
 ];
