@@ -1,4 +1,4 @@
-import { displayDialogue } from '../../utils';
+import { displayDialogue } from '../../utils.js';
 
 export const interactionWithGameMachine11 = (player, k, map) =>{
     player.onCollide('game_machine_11', () => {
@@ -68,6 +68,14 @@ function showCustomPrompt(message, options, callback) {
 
 function closeCustomPrompt() {
     document.getElementById('custom-prompt').style.display = 'none';
+}
+
+export function scitavanie(a, b){
+    return a + b;
+}
+
+export function odcitavanie(a, b){
+    return a - b;
 }
 
 function startChromeFormulaGame(k) {
